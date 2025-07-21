@@ -3,3 +3,4 @@ google-generativeai
 Flask-SQLAlchemy
 Flask-Login
 Werkzeug
+gunicorn
