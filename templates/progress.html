@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Your Progress{% endblock %}
+{% block content %}
+<h2 class="mb-4">Your Nutritional Progress</h2>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <p class="text-muted">This chart shows your nutritional intake over the last 30 days of activity.</p>
+        <canvas id="nutritionChart"></canvas>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    fetch("{{ url_for('nutrition_data') }}")
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('nutritionChart').getContext('2d');
+            const nutritionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: data.datasets
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Calories'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Macronutrients (g)'
+                            },
+                            grid: {
+                                drawOnChartArea: false, // only want the grid lines for one axis to show up
+                            },
+                        },
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Daily Nutritional Intake'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                footer: function(tooltipItems) {
+                                    let footer = [];
+                                    const targets = data.targets;
+                                    if (targets.calories) {
+                                        footer.push(`Target Calories: ${targets.calories}`);
+                                    }
+                                    if (targets.protein) {
+                                        footer.push(`Target Protein: ${targets.protein}g`);
+                                    }
+                                    return footer;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+});
+</script>
+{% endblock %}

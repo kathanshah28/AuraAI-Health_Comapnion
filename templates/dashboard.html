@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2 class="mb-4">Welcome, {{ user.username }}!</h2>
+
+<!-- Nutritional Blueprint & Daily Progress -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header">
+        <h4 class="my-0 fw-normal">Your Daily Plan</h4>
+    </div>
+    <div class="card-body">
+        <p>{{ blueprint.summary }}</p>
+        <div class="row text-center">
+            <div class="col-md-3 col-6">
+                <h5>{{ blueprint.target_calories or 'N/A' }}</h5>
+                <p class="text-muted">Calories</p>
+            </div>
+            <div class="col-md-3 col-6">
+                <h5>{{ blueprint.target_protein or 'N/A' }}g</h5>
+                <p class="text-muted">Protein</p>
+            </div>
+            <div class="col-md-3 col-6">
+                <h5>{{ blueprint.target_carbs or 'N/A' }}g</h5>
+                <p class="text-muted">Carbs</p>
+            </div>
+            <div class="col-md-3 col-6">
+                <h5>{{ blueprint.target_fat or 'N/A' }}g</h5>
+                <p class="text-muted">Fat</p>
+            </div>
+        </div>
+        <hr>
+        <h5 class="text-center">Today's Progress</h5>
+         <div class="row text-center">
+            <!-- Calorie Progress -->
+            <div class="col-md-3 col-6">
+                <h6>{{ todays_log.calories or 0 }}/<small>{{ blueprint.target_calories or 'N/A' }}</small></h6>
+                <div class="progress" role="progressbar">
+                    {% set percent = 0 %}
+                    {% if blueprint.target_calories and blueprint.target_calories > 0 %}
+                        {% set percent = ((todays_log.calories or 0) / blueprint.target_calories * 100)|int %}
+                    {% endif %}
+                    <div class="progress-bar bg-primary" style="width: {{ percent }}%"></div>
+                </div>
+                <p class="text-muted">Calories</p>
+            </div>
+            <!-- Protein Progress -->
+            <div class="col-md-3 col-6">
+                <h6>{{ todays_log.protein or 0 }}/<small>{{ blueprint.target_protein or 'N/A' }}g</small></h6>
+                 <div class="progress" role="progressbar">
+                    {% set percent = 0 %}
+                    {% if blueprint.target_protein and blueprint.target_protein > 0 %}
+                        {% set percent = ((todays_log.protein or 0) / blueprint.target_protein * 100)|int %}
+                    {% endif %}
+                    <div class="progress-bar bg-success" style="width: {{ percent }}%"></div>
+                </div>
+                <p class="text-muted">Protein</p>
+            </div>
+            <!-- Carbs Progress -->
+            <div class="col-md-3 col-6">
+                <h6>{{ todays_log.carbs or 0 }}/<small>{{ blueprint.target_carbs or 'N/A' }}g</small></h6>
+                 <div class="progress" role="progressbar">
+                    {% set percent = 0 %}
+                    {% if blueprint.target_carbs and blueprint.target_carbs > 0 %}
+                        {% set percent = ((todays_log.carbs or 0) / blueprint.target_carbs * 100)|int %}
+                    {% endif %}
+                    <div class="progress-bar bg-warning" style="width: {{ percent }}%"></div>
+                </div>
+                <p class="text-muted">Carbs</p>
+            </div>
+            <!-- Fat Progress -->
+            <div class="col-md-3 col-6">
+                <h6>{{ todays_log.fat or 0 }}/<small>{{ blueprint.target_fat or 'N/A' }}g</small></h6>
+                 <div class="progress" role="progressbar">
+                    {% set percent = 0 %}
+                    {% if blueprint.target_fat and blueprint.target_fat > 0 %}
+                        {% set percent = ((todays_log.fat or 0) / blueprint.target_fat * 100)|int %}
+                    {% endif %}
+                    <div class="progress-bar bg-danger" style="width: {{ percent }}%"></div>
+                </div>
+                <p class="text-muted">Fat</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Meal Logging & History -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h4 class="card-title">🥗 Log a Meal</h4>
+                <form action="{{ url_for('log_meal') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="meal_description" class="form-label">What did you eat?</label>
+                        <textarea class="form-control" id="meal_description" name="meal_description" rows="3" placeholder="e.g., A bowl of oatmeal with blueberries and almonds"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Analyze and Log Meal</button>
+                </form>
+
+                {% set last_analysis = session.pop('last_analysis', None) %}
+                {% if last_analysis %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h5>Last Meal AI Analysis:</h5>
+                    {% if last_analysis.error %}
+                        <p class="text-danger">{{ last_analysis.error }}</p>
+                    {% elif last_analysis.next_meal_suggestion %}
+                        <p><strong>Next Meal Idea:</strong> {{ last_analysis.next_meal_suggestion }}</p>
+                        <p><strong>Snack Idea:</strong> {{ last_analysis.snack_suggestion }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <hr>
+                <h5 class="mt-2">Today's Meal History</h5>
+                <div class="flex-grow-1" style="overflow-y: auto;">
+                    {% if todays_meals %}
+                        <ul class="list-group list-group-flush">
+                        {% for meal in todays_meals %}
+                            <li class="list-group-item">
+                                <strong>{{ meal.description }}</strong><br>
+                                <small class="text-muted">
+                                    ~{{ meal.calories }} cals, {{ meal.protein }}g protein, {{ meal.carbs }}g carbs, {{ meal.fat }}g fat
+                                </small>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center text-muted mt-3">No meals logged yet today.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wellness Check-in -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title">🧘 Mental Wellness Check-in</h4>
+                <form action="{{ url_for('wellness_check') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="user_feeling" class="form-label">How are you feeling today?</label>
+                        <input type="text" class="form-control" id="user_feeling" name="user_feeling" placeholder="e.g., A little stressed about work">
+                    </div>
+                    <button type="submit" class="btn btn-info">Get a Mindful Moment</button>
+                </form>
+                {% set wellness_response = session.pop('wellness_response', None) %}
+                {% if wellness_response %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h5>Aura's Thought:</h5>
+                    <p><em>{{ wellness_response }}</em></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

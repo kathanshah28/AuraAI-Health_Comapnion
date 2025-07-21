@@ -1,0 +1,5 @@
+Flask
+google-generativeai
+Flask-SQLAlchemy
+Flask-Login
+Werkzeug
